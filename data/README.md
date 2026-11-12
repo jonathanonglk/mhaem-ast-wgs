@@ -18,3 +18,6 @@ breakpoints fall at:
 
 For CIP, ranks 4–7 correspond to 1, 2, 4 and 8 µg/mL. Full rank-to-MIC
 mappings are in Supplementary Tables 1 and 3 of the manuscript.
+
+Note: CIP and AMI have an intermediate category (rank 5 and rank 6
+respectively); RIF does not — rank 5 (2 µg/mL) is resistant.
