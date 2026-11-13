@@ -79,8 +79,7 @@ KINSHIP_LEGACY="$WORKDIR/phylogeny_kinship_legacy.tsv"   # old 1 - d/max matrix 
 
 # Clinical isolates (one per patient) — the ONLY samples analysed in the GWAS
 # and in all diagnostic statistics. Identical to the CLINICAL list in
-# pangenome.sh. Replicates, ATCC 29548 (CT-WNTC9548) and CT-WN17CD6059
-# (contaminated; replaced by CT-WN18CA1178) are excluded so that pyseer's af
+# pangenome.sh. Replicates and ATCC 29548 (CT-WNTC9548) are excluded so that pyseer's af
 # and the 2x2 tables share the same denominator (n = 56) and same-patient
 # isolates are not counted twice.
 CLINICAL=(
@@ -98,7 +97,7 @@ CLINICAL=(
     CT-WN18CA7566 CT-WN18CA1178
 )
 
-EXCLUDED_FROM_CORE="CT-WN17CD6059"   # contaminated; replaced by CT-WN18CA1178
+EXCLUDED_FROM_CORE=""                # optional: a library to drop from the core alignment
 ATCC_SAMPLE="CT-WNTC9548"
 REPLICATES=(
     "CT-WN18CA0775"
@@ -317,14 +316,14 @@ for R1 in "$RAW_READS/"*_R1.fastq.gz; do
 done
 
 # -----------------------------------------------------------------------------
-# Step 7. MultiQC (excluding the contaminated isolate)
+# Step 7. MultiQC
 #
 # The report is written to $WORKDIR/qc_61 rather than $WORKDIR/qc so that
-# MultiQC never scans its own previous output, and so the 62-library report
-# from earlier runs is not silently reused.
+# MultiQC never scans its own previous output, and so a stale report from an
+# earlier run is not silently reused.
 # -----------------------------------------------------------------------------
 echo "============================================================"
-echo "[PART A] STEP 7: Generating MultiQC report (excluding $EXCLUDED_FROM_CORE)"
+echo "[PART A] STEP 7: Generating MultiQC report"
 echo "============================================================"
 
 MULTIQC_OUT="$WORKDIR/qc_61"
@@ -332,11 +331,12 @@ MULTIQC_OUT="$WORKDIR/qc_61"
 if [[ -f "$MULTIQC_OUT/multiqc_report.html" && "$MULTIQC_OUT/multiqc_report.html" -nt "$WORKDIR/qc" ]]; then
     echo "SKIP MultiQC — report is up to date: $MULTIQC_OUT/multiqc_report.html"
 else
-    multiqc \
-        -f \
-        -o "$MULTIQC_OUT" \
-        --ignore-samples "${EXCLUDED_FROM_CORE}*" \
-        "$WORKDIR/qc"
+    if [[ -n "$EXCLUDED_FROM_CORE" ]]; then
+        multiqc -f -o "$MULTIQC_OUT" \
+            --ignore-samples "${EXCLUDED_FROM_CORE}*" "$WORKDIR/qc"
+    else
+        multiqc -f -o "$MULTIQC_OUT" "$WORKDIR/qc"
+    fi
 fi
 
 # Confirm the exclusion actually took effect
@@ -349,10 +349,9 @@ fi
 # -----------------------------------------------------------------------------
 # Step 7b. fastp QC summary tables
 #
-# Writes per-sample metrics and a summary for (i) all retained libraries and
-# (ii) the clinical isolates only (replicates, the QC strain and the
-# contaminated isolate excluded). The clinical summary is the one quoted in
-# the manuscript.
+# Writes per-sample metrics and a summary for (i) all libraries and
+# (ii) the clinical isolates only (replicates and the QC strain excluded).
+# The clinical summary is the one quoted in the manuscript.
 # -----------------------------------------------------------------------------
 echo "============================================================"
 echo "[PART A] STEP 7b: fastp QC summary tables"
@@ -371,8 +370,8 @@ replicates = set(r for r in rep_str.split(",") if r)
 rows = []
 for f in sorted(glob.glob(os.path.join(qc_dir, "*.fastp.json"))):
     s = os.path.basename(f)[:-len(".fastp.json")]
-    if s == excluded:
-        continue                      # contaminated isolate, not analysed
+    if excluded and s == excluded:
+        continue                      # optional excluded library
     d = json.load(open(f))
     b, a = d["summary"]["before_filtering"], d["summary"]["after_filtering"]
     group = ("QC strain" if s == atcc else
@@ -429,17 +428,16 @@ QC_SUMMARY_EOF
 
 # -----------------------------------------------------------------------------
 # Step 8. Core SNP alignment
-# Excludes CT-WN17CD6059 (contaminated assembly; replaced by CT-WN18CA1178).
 # -----------------------------------------------------------------------------
 echo "============================================================"
-echo "[PART A] STEP 8: Running snippy-core (excluding $EXCLUDED_FROM_CORE)"
+echo "[PART A] STEP 8: Running snippy-core"
 echo "============================================================"
 
-# Build list of snippy directories, excluding the contaminated sample
+# Build list of snippy directories (optionally dropping $EXCLUDED_FROM_CORE)
 SNIPPY_DIRS=()
 for d in "$WORKDIR/snippy"/*/; do
     sample=$(basename "$d")
-    if [[ "$sample" != "$EXCLUDED_FROM_CORE" ]]; then
+    if [[ -z "$EXCLUDED_FROM_CORE" || "$sample" != "$EXCLUDED_FROM_CORE" ]]; then
         SNIPPY_DIRS+=("$d")
     fi
 done
@@ -509,7 +507,7 @@ echo "============================================================"
 #WORKDIR="$HOME/mhaem_wgs"
 
 grep -E "B586_RS03455|B586_RS00030|B586_RS00025|B586_RS14090" \
-    $(ls "$WORKDIR/snippy"/*/snps.tab | grep -v CT-WN17CD6059) \
+    $(ls "$WORKDIR/snippy"/*/snps.tab) \
     > "$WORKDIR/resistance_mutations_2.tsv" || true
 
 echo "  $(wc -l < "$WORKDIR/resistance_mutations_2.tsv") variant line(s) in target genes"

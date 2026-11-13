@@ -162,7 +162,7 @@ export PANGENOME_OUT MIC_AMI MIC_CIP MIC_RIF THREADS_PER_JOB PARALLEL_JOBS
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
 
 log "Sample counts:"
-log "  Clinical isolates : ${#CLINICAL[@]} (CT-WN17CD6059 excluded — contaminated; CT-WN18CA1178 substituted)"
+log "  Clinical isolates : ${#CLINICAL[@]}"
 log "  Replicates        : ${#REPLICATES[@]}"
 log "  ATCC 29548        : 1 ($ATCC)"
 log "  Total for SPAdes  : ${#ALL_SAMPLES[@]}"
@@ -347,7 +347,7 @@ wait
 log "Step 3 complete"
 
 # =============================================================================
-# STEP 3b: Pan-genome QC table (57 rows: 56 clinical isolates + CT-WN17CD6059 for transparency)
+# STEP 3b: Pan-genome QC table (one row per clinical isolate)
 # Columns: Sample | N50 | Contigs_ge500bp | Total_size_Mb | Largest_contig_bp
 #          | GC_pct | Prokka_genes | Trimmed_reads | QC_flag
 #
@@ -368,8 +368,7 @@ if [ -f "$QC_TSV" ]; then
 else
 
 # Export CLINICAL array as newline-separated string for Python
-# Include CT-WN17CD6059 in QC table (excluded from analysis but shown for transparency)
-CLINICAL_STR=$(printf '%s\n' "${CLINICAL[@]}" "CT-WN17CD6059")
+CLINICAL_STR=$(printf '%s\n' "${CLINICAL[@]}")
 
 python3 - << STEP3B_EOF
 import os, sys, math, csv
@@ -404,16 +403,6 @@ if os.path.isfile(QUAST_TSV):
     print(f"  QUAST: loaded {len(quast)} entries")
 else:
     print(f"  WARNING: QUAST transposed report not found at {QUAST_TSV}")
-
-# Hardcode known values for CT-WN17CD6059 (excluded from QUAST in current run
-# because it is no longer in ALL_SAMPLES, but must appear in QC table for
-# transparency). Values from previous QUAST run on filtered contigs (>=500 bp).
-quast["CT-WN17CD6059"] = {
-    "N50":            "13862",
-    "contigs":        "2997",
-    "total_length":   "6847000",   # 6.847 Mb
-    "largest_contig": "137163",
-}
 
 # ---------------------------------------------------------------------------
 # GC content from filtered FASTA
@@ -644,7 +633,7 @@ PRESENCE_ABSENCE=$PANAROO_OUT/gene_presence_absence.Rtab
 
 # Write clinical-only sample list (ATCC excluded — no phenotype)
 printf '%s\n' "${CLINICAL[@]}" > "$SAMPLES_LIST"
-log "  Sample list written: ${#CLINICAL[@]} clinical isolates (includes CT-WN18CA1178, excludes CT-WN17CD6059)"
+log "  Sample list written: ${#CLINICAL[@]} clinical isolates"
 
 if [ -f "$KINSHIP" ]; then
     log "SKIP kinship matrix (already exists: $KINSHIP)"
@@ -1452,7 +1441,7 @@ SNIPPY="$WORKDIR/snippy"
 GBFF="$REF_GBFF"
 CORE_ALN="$WORKDIR/core/core.full.aln"
 
-EXCLUDED="CT-WN17CD6059"                 # contaminated; replaced by CT-WN18CA1178
+EXCLUDED=""                              # optional: a library to exclude
 ATCC="CT-WNTC9548"
 REPLICATES="CT-WN18CA0775,CT-WN18CA3057,CT-WN18CD7757,CT-WN17CC9963"
 

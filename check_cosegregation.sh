@@ -5,7 +5,7 @@
 # the genome".
 #
 # Run:   bash check_cosegregation.sh
-#        bash check_cosegregation.sh RESULTS=/home/jonat/mhaem_wgs/pyseer_results_CIP.txt
+#        bash check_cosegregation.sh RESULTS=~/mhaem_wgs/pyseer_results_CIP.txt
 #        bash check_cosegregation.sh DRUG=AMI TOPN=3
 #
 # Method: variants that share a presence/absence pattern necessarily receive

@@ -184,7 +184,7 @@ kept, that column reports `NA` and is skipped; rerun pyseer with
 
 Other published values these scripts should reproduce:
 
-- 56 clinical isolates from unique patients; 5 replicates and ATCC 29548 excluded, plus CT-WN17CD6059 (contaminated) excluded from the core alignment
+- 61 libraries: 56 clinical isolates from unique patients, 4 repeat isolates and ATCC 29548; replicates and the QC strain are excluded from the clinical summaries
 - gyrA intein: 420 aa, codons 131-550, reference positions 7,656-8,915 (1,260 bp), present in 14 clinical isolates and the reference
 - CIP non-susceptible 49/56, RIF non-susceptible 25/56, AMI non-susceptible 40/56
 - The three B586_RS18800 variants (4,021,393 / 4,021,694 / 4,021,771): 16 isolates carry the reference allele, all CIP non-susceptible; those 16 are the 14 intein-positive isolates plus CT-WN16CD4677 and CT-WN17CD1188

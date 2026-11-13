@@ -5,7 +5,7 @@
 # clusters that track the gyrA intein lineage.
 #
 # Run:  bash test_kinship_absorption.sh
-#       bash test_kinship_absorption.sh PANDIR=/home/jonat/pangenome/pyseer
+#       bash test_kinship_absorption.sh PANDIR=~/pangenome/pyseer
 #
 # For every cluster whose presence/absence closely matches intein status it
 # reports:
