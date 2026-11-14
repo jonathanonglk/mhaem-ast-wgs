@@ -215,3 +215,14 @@ ug/mL will classify every isolate as non-susceptible.
   its input reports and the script continues.
 - Resources: SPAdes is the limiting step. Allow roughly 16 GB RAM per parallel
   job and several hours for 60+ isolates on 4–8 threads.
+
+---
+
+## Human-read screening
+
+`scrub_reads.sh` screens raw reads for human sequence with NCBI
+sra-human-scrubber v2.2.1 (database `human_filter.db.20260706v2`) before SRA
+deposition. It is not part of the analysis pipeline: the published results
+were generated from the unscreened reads. No human reads were found in any
+of the 122 files (357,713,260 reads); per-library counts are in
+`data/scrub_report.tsv`.
